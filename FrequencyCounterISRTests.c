@@ -51,7 +51,7 @@ void buildFrequency(uint32_t n)
         scale *= 1000;
     }
     
-	sprintf(charArray, "%u", n);
+	sprintf(charArray, "%u", (unsigned int) n);
 	memcpy(frequencyCharArray, charArray, strlen(charArray));
 
     while (scale != 1) 
@@ -59,7 +59,7 @@ void buildFrequency(uint32_t n)
         scale /= 1000;
         n = n2 / scale;
         n2 = n2 % scale;    
-		sprintf(charArray, ",%03u", n);
+		sprintf(charArray, ",%03u", (unsigned int) n);
 		memcpy(frequencyCharArray + strlen(frequencyCharArray), charArray, strlen(charArray));		
     }
 }

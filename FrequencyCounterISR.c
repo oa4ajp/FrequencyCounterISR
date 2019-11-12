@@ -27,12 +27,19 @@ Y7					| PB1
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include <avr/interrupt.h>
+#include <stdio.h>
+#include <string.h>
 
 #define USART_BAUDRATE 9600
 #define UBRR_VALUE (((F_CPU/(USART_BAUDRATE*16UL)))-1)
+#define MAXBUF 10
+#define MAXBUFDISPLAY 13
 
 volatile char gateCycled = 0;
 volatile int seconds = 0;
+
+char frequencyCharArray[MAXBUF + 1];
+char frequencyToDisplayCharArray[MAXBUFDISPLAY + 1];
 
 void serialInit(void)
 {
@@ -42,7 +49,7 @@ void serialInit(void)
 	UCSR0C |= (1 << UCSZ01) | (1 << UCSZ01); // no parity, 1 stop bit, 8-bit data
 }
 
-void serialSend(unsigned char data)
+void serialSend(char data)
 {
 	// send a single character via USART
 	while(!(UCSR0A & (1 << UDRE0))){}; //wait while previous byte is completed
@@ -91,6 +98,48 @@ void serialNumber(uint32_t  val)
 		val -= (val/divby) * divby;
 		divby /= 10;
 	}
+}
+
+void buildFrequencyToDisplay(void) 
+{
+	memset(frequencyToDisplayCharArray, 0, sizeof(frequencyToDisplayCharArray));
+	sprintf(frequencyToDisplayCharArray, "%13s", frequencyCharArray);
+}
+
+void buildFrequency(uint32_t n) 
+{	
+	char charArray[4 + 1]; //Max size = 4 ",%03u"  3 plus the comma	
+	memset(charArray, 0, sizeof(charArray));
+	memset(frequencyCharArray, 0, sizeof(frequencyCharArray));
+
+	int n2 = 0;
+    int scale = 1;
+
+    while (n >= 1000) 
+	{
+        n2 = n2 + scale * (n % 1000);
+        n /= 1000;
+        scale *= 1000;
+    }
+    
+	sprintf(charArray, "%u", (unsigned int) n);
+	memcpy(frequencyCharArray, charArray, strlen(charArray));
+
+    while (scale != 1) 
+	{
+        scale /= 1000;
+        n = n2 / scale;
+        n2 = n2 % scale;    
+		sprintf(charArray, ",%03u", (unsigned int) n);
+		memcpy(frequencyCharArray + strlen(frequencyCharArray), charArray, strlen(charArray));		
+    }
+}
+
+void printFrequency(uint32_t n) 
+{	
+	buildFrequency(n);
+	buildFrequencyToDisplay();
+	serialString(frequencyToDisplayCharArray);	
 }
 
 void setRegister(char registerNumber)
@@ -249,7 +298,7 @@ int main(void)
             serialString("C = ");
             serialNumber(countNow);
             serialString(", F = ");                    
-            serialNumber(countDiff); // send the difference                        
+            printFrequency(countDiff); // send the difference                        
             serialBreak();                                        
 
             countLast = countNow;
