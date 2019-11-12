@@ -8,16 +8,16 @@
 char frequencyCharArray[MAXBUF + 1];
 char frequencyToDisplayCharArray[MAXBUFDISPLAY + 1];
 
-void serial_send(char data)
+void serialSend(char data)
 {
 	printf("%c", data);
 }
 
-void serial_string(const char* s)
+void serialString(const char* s)
 {
     while (*s)
     {
-		serial_send(*s++);
+		serialSend(*s++);
 	}
 }
 
@@ -25,7 +25,7 @@ void printFrequency(uint32_t n)
 {	
 	buildFrequency(n);
 	buildFrequencyToDisplay();
-	serial_string(frequencyToDisplayCharArray);	
+	serialString(frequencyToDisplayCharArray);	
 }
 
 void buildFrequencyToDisplay() 
@@ -64,7 +64,7 @@ void buildFrequency(uint32_t n)
     }
 }
 
-void serial_number(uint32_t frequency) 
+void serialNumber(uint32_t frequency) 
 {     
 	printFrequency(frequency);
 }

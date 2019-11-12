@@ -50,3 +50,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Win AVR
+*.eep
+*.lss
+*.lst
+*.sym

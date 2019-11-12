@@ -23,20 +23,18 @@ Y7					| PB1
 
 */
 
-#define F_CPU 16000000ul
 #include <avr/io.h>
 #include <util/delay.h>
+#include <avr/interrupt.h>
 #include <avr/interrupt.h>
 
 #define USART_BAUDRATE 9600
 #define UBRR_VALUE (((F_CPU/(USART_BAUDRATE*16UL)))-1)
 
-volatile int millisecPerUpdate;
 volatile char gateCycled = 0;
 volatile int seconds = 0;
-volatile int milliseconds = 0;
 
-void serial_init()
+void serialInit(void)
 {
 	// initialize USART (must call this before using it)
 	UBRR0 = UBRR_VALUE; // set baud rate
@@ -44,58 +42,58 @@ void serial_init()
 	UCSR0C |= (1 << UCSZ01) | (1 << UCSZ01); // no parity, 1 stop bit, 8-bit data
 }
 
-void serial_send(unsigned char data)
+void serialSend(unsigned char data)
 {
 	// send a single character via USART
 	while(!(UCSR0A & (1 << UDRE0))){}; //wait while previous byte is completed
 	UDR0 = data; // Transmit data
 }
 
-void serial_string(const char* s)
+void serialString(const char* s)
 {
     while (*s)
     {
-		serial_send(*s++);
+		serialSend(*s++);
 	}
 }
 
-void serial_break()
+void serialBreak(void)
 {
-	serial_send(10); // new line 
-	serial_send(13); // carriage return
+	serialSend(10); // new line 
+	serialSend(13); // carriage return
 }
 
-void serial_comma()
+void serialComma(void)
 {
-	serial_send(','); // comma
-	serial_send(' '); // space
+	serialSend(','); // comma
+	serialSend(' '); // space
 }
 
-void SerialSend_intThreeDigit(int val)
+void SerialSendThreeDigit(int val)
 {
     int divby = 100;
     while (divby >= 1)
     {
-        serial_send('0' + val / divby);
+        serialSend('0' + val / divby);
         val -= (val / divby) * divby;
         divby /= 10;
     }
 }
 
 // send a number as ASCII text
-void serial_number(uint32_t  val) 
+void serialNumber(uint32_t  val) 
 {     
 	uint32_t divby = 1000000000; // change by dataType 1 cycles per sec (Default)
 
 	while (divby >= 1)
     {
-		serial_send('0' + val/divby);
+		serialSend('0' + val/divby);
 		val -= (val/divby) * divby;
 		divby /= 10;
 	}
 }
 
-char setRegister(char registerNumber)
+void setRegister(char registerNumber)
 {    	
     // DDRB: Data Direction register for port "B" (Define input(0) or output(1))
     DDRB |= 0b00000001; // set B0 as outputs 
@@ -169,7 +167,7 @@ int readRegister(char registerNumber)
     return value;
 }
 
-uint32_t readCount()
+uint32_t readCount(void)
 {
     uint32_t value = 0;
 
@@ -191,23 +189,20 @@ uint32_t readCount()
     return value;
 }
 
-void serial_test()
+void serialTest(void)
 {
 	char i;
-	serial_break();
+	serialBreak();
 	for (i=65; i<(65+26); i++)
     {
-		serial_send(i);
+		serialSend(i);
 	}
-	serial_break();
+	serialBreak();
 }
 
-void TimerInitialize()
+void timerInitialize(void)
 {
-	// INT0 is pin PD02    	
-    int updatesPerSecond = 1;    
-	millisecPerUpdate = 1000 / updatesPerSecond;
-
+	// INT0 is pin PD02
     DDRD &= ~(1 << DDD2); // Clear the PD2 pin
     // PD2 (PCINT0 pin) is now an input
 
@@ -222,14 +217,9 @@ void TimerInitialize()
 
 ISR (INT0_vect)
 {		
-    milliseconds += millisecPerUpdate;
-	if (milliseconds >= 1000)
-	{
-		milliseconds = 0;
-		seconds += 1;
-		if (seconds >= 1000)
-			seconds = 0;
-	}
+    seconds += 1;
+    if (seconds >= 1000)
+        seconds = 0;
     
 	gateCycled = 1;
 }
@@ -239,12 +229,12 @@ int main(void)
 	// count reads: PC5,PC4,PC3,PC2,PC1,PC0,PB2,PB1
 	// INPUTS NOT OUTPUTS
 	
-	serial_init();
-    TimerInitialize();
-	serial_string("Frequency Counter");
-	serial_break();  
+	serialInit();
+    timerInitialize();
+	serialString("Frequency Counter");
+	serialBreak();  
 
-    uint32_t countLast;
+    uint32_t countLast = 0;
 	uint32_t countNow;
 	uint32_t countDiff;
 
@@ -255,15 +245,12 @@ int main(void)
             cli();            
             countNow = readCount();
             countDiff = countNow - countLast;
-            SerialSend_intThreeDigit(seconds);
-			serial_comma();
-			SerialSend_intThreeDigit(milliseconds);
-			serial_comma();
-            serial_string("C = ");
-            serial_number(countNow);
-            serial_string(", F = ");                    
-            serial_number(countDiff); // send the difference                        
-            serial_break();                                        
+
+            serialString("C = ");
+            serialNumber(countNow);
+            serialString(", F = ");                    
+            serialNumber(countDiff); // send the difference                        
+            serialBreak();                                        
 
             countLast = countNow;
             gateCycled = 0;
