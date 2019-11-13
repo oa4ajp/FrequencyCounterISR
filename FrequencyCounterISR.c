@@ -69,7 +69,7 @@ void serialComma(void)
 	serialSend(' '); // space
 }
 
-void SerialSendThreeDigit(int val)
+void serialSendThreeDigit(int val)
 {
     int divby = 100;
     while (divby >= 1)
@@ -104,6 +104,20 @@ void serialNumber(uint32_t  val)
 		val -= (val/divby) * divby;        
 		divby /= 10;            
 	}
+}
+
+//Format number without padding zeros at the left.
+char *ultoa(unsigned long val, char *s)
+{
+    char *p = s + 13;
+    *p = '\0';
+    do {
+        if ((p - s) % 4 == 2)
+            *--p = ',';
+        *--p = '0' + val % 10;
+        val /= 10;
+    } while (val);
+    return p;
 }
 
 void setRegister(char registerNumber)

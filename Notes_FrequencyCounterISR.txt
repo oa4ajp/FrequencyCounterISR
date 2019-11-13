@@ -5,8 +5,5 @@ Result: FrequencyCounterISRTests.o
 Execute Program: ./FrequencyCounterISRTests.o
 
 The max number of chars to shows are 10.
-
-
-
-
+Create separated files for the serial methods use .h and c.
 
