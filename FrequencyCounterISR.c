@@ -34,6 +34,12 @@ Y7					| PB1
 
 volatile char gateCycled = 0;
 
+#define MAXBUF 13
+#define MAXCHARS 13
+
+char frequencyCharArray[MAXBUF + 1];
+char frequencyToDisplayCharArray[MAXBUF + 1];
+
 void serialInit(void)
 {
 	// initialize USART (must call this before using it)
@@ -80,44 +86,30 @@ void serialSendThreeDigit(int val)
     }
 }
 
-void serialNumber(uint32_t  val) 
+void serialNumber(uint32_t  val, int numOfChars) 
 {       
-    uint32_t divby = 1000000000; // change by dataType 1 cycles per sec (Default)
+    uint32_t divby = 1000000000; // change by dataType 1 cycles per sec (Default)    
+    
+    memset(frequencyCharArray, 0, sizeof(frequencyCharArray));
+    memset(frequencyToDisplayCharArray, 0, sizeof(frequencyToDisplayCharArray));    
+    uint16_t index = 0;
 
 	while (divby >= 1)
     {
-		serialSend('0' + val/divby);
+        frequencyCharArray[index++] = '0' + val/divby;		
 
-        if(divby == 1000) 
-        {
-            serialSend('.');
+        if(divby == 1000000000 || divby == 1000000 || divby == 1000) 
+        {            
+            frequencyCharArray[index++] = '.';
         }
-        else if(divby == 1000000)
-        {
-            serialSend('.');
-        }
-        else if(divby == 1000000000)
-        {
-            serialSend('.');
-        }        
- 
+     
 		val -= (val/divby) * divby;        
-		divby /= 10;            
+		divby /= 10;     
 	}
-}
 
-//Format number without padding zeros at the left.
-char *ultoa(unsigned long val, char *s)
-{
-    char *p = s + 13;
-    *p = '\0';
-    do {
-        if ((p - s) % 4 == 2)
-            *--p = ',';
-        *--p = '0' + val % 10;
-        val /= 10;
-    } while (val);
-    return p;
+    // 10 digits plus 3 dots = 13 characters
+    memcpy(frequencyToDisplayCharArray, frequencyCharArray + (MAXCHARS - numOfChars) , numOfChars);
+    serialString(frequencyToDisplayCharArray);
 }
 
 void setRegister(char registerNumber)
@@ -267,12 +259,20 @@ int main(void)
 		{	            
             cli();            
             countNow = readCount();
-            countDiff = countNow - countLast;
+            
+            if(countLast > 0) 
+            {
+                countDiff = countNow - countLast;
+            }
+            else
+            {
+               countDiff = 0; 
+            }
 
             serialString("C = ");
-            serialNumber(countNow);
+            serialNumber(countNow, 13);        
             serialString(", F = ");                                         
-            serialNumber(countDiff); // send the difference
+            serialNumber(countDiff, 11); // send the difference
             serialBreak();                                        
 
             countLast = countNow;

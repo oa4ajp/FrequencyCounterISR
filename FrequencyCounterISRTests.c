@@ -65,6 +65,20 @@ void buildFrequency(uint32_t n)
     }
 }
 
+char *ultoa(unsigned long val, char *s)
+{
+    char *p = s + 13;
+    *p = '\0';
+    do {
+        if ((p - s) % 4 == 2)
+            *--p = ',';
+        *--p = '0' + val % 10;
+        val /= 10;
+    } while (val);
+    return p;
+}
+
+
 /*
  ** valToStr
  *
@@ -100,7 +114,67 @@ char * valToStr(uint32_t val, char *buf, uint8_t bufSize, char sepChar)
         uint8_t digCnt = 0;
 
         // general case: possibly multiple digits with thousands separators
-        while ((val != 0) && bufSize)
+        while (/*(val != 0) &&*/ bufSize)
+        {
+            // add a thousands separator every three digits
+            if (sepChar && (digCnt >= 3) && (bufSize > 1))
+            {
+                *(--buf) = sepChar;
+                bufSize--;
+                digCnt = 0;
+            }
+
+            // add another digit to the buffer
+            *(--buf) = (char)(val % 10) | '0';
+            digCnt++;
+            bufSize--;
+
+            // prepare for producing the next digit
+            val /= 10;
+        }
+    }
+
+    // return a pointer to the completed string
+    return(buf);
+}
+
+
+/*
+ ** valToStr
+ *
+ * Convert a value to a string of decimal digits with optional
+ * thousands separators and a null termination.
+ *
+ * 'val'     is the value to convert
+ * 'buf'     points to a buffer in which to place the characters
+ * 'bufSize' gives the size of the buffer (should be >= 14)
+ * 'sepChar' is the thousands separator (if non-zero)
+ *
+ * The return value will be null if the buffer is too small.  Otherwise,
+ * the return value will point to the most significant digit of the string.
+ *
+ */
+char * valToStrPaddingZero(uint32_t val, char *buf, uint8_t bufSize, char sepChar)
+{
+    // validate the parameters, return null on error
+    if ((bufSize < 2) || (buf == (char *)0))
+        return((char *)0);
+
+    // put a null at the end of the buffer, adjust the size
+    buf += bufSize--;
+    *(--buf) = '\0';
+
+    // special case: value equal zero
+    if (val == 0)
+    {
+        *(--buf) = '0';
+    }
+    else
+    {
+        uint8_t digCnt = 0;
+
+        // general case: possibly multiple digits with thousands separators
+        while (/*(val != 0) &&*/ bufSize)
         {
             // add a thousands separator every three digits
             if (sepChar && (digCnt >= 3) && (bufSize > 1))
@@ -137,9 +211,9 @@ int main() {
 	char bufferToDisplay[15 + 2];
 	memset(bufferToDisplay, 0, sizeof(bufferToDisplay));
 
-	//char *pointerBufferToDisplay = bufferToDisplay;
+	char *pointerBufferToDisplay = bufferToDisplay;
 
-	char *pointerBufferToDisplay = malloc(17 * sizeof(char));
+	//char *pointerBufferToDisplay = malloc(17 * sizeof(char));
 
 	//uint32_t frequency = 24999123;
 	//uint32_t frequency = 1999123;
@@ -165,20 +239,66 @@ int main() {
 	//serialString(bufferToDisplay);
 
 	memset(buffer, 0, sizeof(buffer));
-	pointerBufferToDisplay = valToStr(frequency, buffer, 16, '.');
+    memset(bufferToDisplay, 0, sizeof(bufferToDisplay));
+	pointerBufferToDisplay = valToStrPaddingZero(frequency, buffer, 14, '.');
 	serialString(pointerBufferToDisplay);
 	printf("\n");
 
 	frequency += 10;
 	memset(buffer, 0, sizeof(buffer));
-	pointerBufferToDisplay = valToStr(frequency, buffer, 16, '.');
+    memset(bufferToDisplay, 0, sizeof(bufferToDisplay));
+	pointerBufferToDisplay = valToStrPaddingZero(frequency, buffer, 14, '.');
 	serialString(pointerBufferToDisplay);
 	printf("\n");
 
 	frequency += 100;
 	memset(buffer, 0, sizeof(buffer));
-	pointerBufferToDisplay = valToStr(frequency, buffer, 16, '.');
+    memset(bufferToDisplay, 0, sizeof(bufferToDisplay));
+	pointerBufferToDisplay = valToStrPaddingZero(frequency, buffer, 15, '.');
 	serialString(pointerBufferToDisplay);
+    printf("\n");
+
+    frequency += 1000;
+	memset(buffer, 0, sizeof(buffer));
+    memset(bufferToDisplay, 0, sizeof(bufferToDisplay));
+	pointerBufferToDisplay = valToStrPaddingZero(frequency, buffer, 15, '.');
+	serialString(pointerBufferToDisplay);
+    printf("\n");   
+
+    frequency += 10000;
+	memset(buffer, 0, sizeof(buffer));
+    memset(bufferToDisplay, 0, sizeof(bufferToDisplay));
+	pointerBufferToDisplay = valToStrPaddingZero(frequency, buffer, 15, '.');
+	serialString(pointerBufferToDisplay);    
+    printf("\n");
+
+    frequency += 100000;
+	memset(buffer, 0, sizeof(buffer));
+    memset(bufferToDisplay, 0, sizeof(bufferToDisplay));
+	pointerBufferToDisplay = valToStrPaddingZero(frequency, buffer, 15, '.');
+	serialString(pointerBufferToDisplay);    
+    printf("\n");
+
+    frequency += 1000000;
+	memset(buffer, 0, sizeof(buffer));
+    memset(bufferToDisplay, 0, sizeof(bufferToDisplay));
+	pointerBufferToDisplay = valToStrPaddingZero(frequency, buffer, 15, '.');
+	serialString(pointerBufferToDisplay);    
+    printf("\n");
+
+    frequency += 10000000;
+	memset(buffer, 0, sizeof(buffer));
+    memset(bufferToDisplay, 0, sizeof(bufferToDisplay));
+	pointerBufferToDisplay = valToStrPaddingZero(frequency, buffer, 15, '.');
+	serialString(pointerBufferToDisplay);    
+    printf("\n");
+
+    frequency += 100000000;
+	memset(buffer, 0, sizeof(buffer));
+    memset(bufferToDisplay, 0, sizeof(bufferToDisplay));
+	pointerBufferToDisplay = valToStrPaddingZero(frequency, buffer, 15, '.');
+	serialString(pointerBufferToDisplay);    
+    printf("\n");
 
     return 0;
 }
