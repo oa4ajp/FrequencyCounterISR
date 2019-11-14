@@ -28,6 +28,7 @@ Y7					| PB1
 #include <avr/interrupt.h>
 #include <avr/interrupt.h>
 #include <stdio.h>
+#include <string.h> /* memset */
 
 #define USART_BAUDRATE 9600
 #define UBRR_VALUE (((F_CPU/(USART_BAUDRATE*16UL)))-1)
@@ -35,10 +36,11 @@ Y7					| PB1
 volatile char gateCycled = 0;
 
 #define MAXBUF 13
-#define MAXCHARS 13
 
 char frequencyCharArray[MAXBUF + 1];
-char frequencyToDisplayCharArray[MAXBUF + 1];
+
+//Method declarations
+char *unsignedLongToChar(unsigned long val, char *buffer, int numOfDigitsToDisplay);
 
 void serialInit(void)
 {
@@ -86,31 +88,37 @@ void serialSendThreeDigit(int val)
     }
 }
 
-void serialNumber(uint32_t  val, int numOfChars) 
-{       
-    uint32_t divby = 1000000000; // change by dataType 1 cycles per sec (Default)    
-    
+void serialNumber(uint32_t  val, int numOfDigitsToDisplay) 
+{   
     memset(frequencyCharArray, 0, sizeof(frequencyCharArray));
-    memset(frequencyToDisplayCharArray, 0, sizeof(frequencyToDisplayCharArray));    
-    uint16_t index = 0;
+	char *pRespone;
 
-	while (divby >= 1)
-    {
-        frequencyCharArray[index++] = '0' + val/divby;		
-
-        if(divby == 1000000000 || divby == 1000000 || divby == 1000) 
-        {            
-            frequencyCharArray[index++] = '.';
-        }
-     
-		val -= (val/divby) * divby;        
-		divby /= 10;     
-	}
-
-    // 10 digits plus 3 dots = 13 characters
-    memcpy(frequencyToDisplayCharArray, frequencyCharArray + (MAXCHARS - numOfChars) , numOfChars);
-    serialString(frequencyToDisplayCharArray);
+	pRespone = unsignedLongToChar(1000000, frequencyCharArray, numOfDigitsToDisplay);
+	
+	serialString(pRespone);  
 }
+
+/*
+	Length of parameter Buffer >= 14
+*/
+char *unsignedLongToChar(unsigned long val, char *buffer, int numOfDigitsToDisplay)
+{
+	const int bufferSize = 13; 
+    char *p = buffer + bufferSize;
+    *p = '\0';
+    do {						
+        if ((p - buffer) % 4 == 2)
+		{
+            *--p = '.';
+		}
+        *--p = '0' + val % 10;
+        val /= 10;
+
+		--numOfDigitsToDisplay;
+    } while (numOfDigitsToDisplay);
+    return p;
+}
+
 
 void setRegister(char registerNumber)
 {    	
@@ -270,9 +278,9 @@ int main(void)
             }
 
             serialString("C = ");
-            serialNumber(countNow, 13);        
+            serialNumber(countNow, 10);        
             serialString(", F = ");                                         
-            serialNumber(countDiff, 11); // send the difference
+            serialNumber(countDiff, 9); // send the difference
             serialBreak();                                        
 
             countLast = countNow;
