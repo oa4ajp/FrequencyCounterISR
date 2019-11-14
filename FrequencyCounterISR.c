@@ -88,7 +88,7 @@ void serialSendThreeDigit(int val)
     }
 }
 
-void serialNumber(uint32_t  val, int numOfDigitsToDisplay) 
+void buildFrequency(uint32_t val, int numOfDigitsToDisplay) 
 {   
     memset(frequencyCharArray, 0, sizeof(frequencyCharArray));
 	char *pRespone;
@@ -106,6 +106,7 @@ char *unsignedLongToChar(unsigned long val, char *buffer, int numOfDigitsToDispl
 	const int bufferSize = 13; 
     char *p = buffer + bufferSize;
     *p = '\0';
+
     do {						
         if ((p - buffer) % 4 == 2)
 		{
@@ -116,6 +117,7 @@ char *unsignedLongToChar(unsigned long val, char *buffer, int numOfDigitsToDispl
 
 		--numOfDigitsToDisplay;
     } while (numOfDigitsToDisplay);
+    
     return p;
 }
 
@@ -278,9 +280,9 @@ int main(void)
             }
 
             serialString("C = ");
-            serialNumber(countNow, 10);        
+            buildFrequency(countNow, 10);        
             serialString(", F = ");                                         
-            serialNumber(countDiff, 9); // send the difference
+            buildFrequency(countDiff, 9); // send the difference
             serialBreak();                                        
 
             countLast = countNow;
