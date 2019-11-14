@@ -65,19 +65,70 @@ void buildFrequency(uint32_t n)
     }
 }
 
-char *ultoa(unsigned long val, char *s)
+/*
+	Length of Buffer >=14
+*/
+char *ulToChar(unsigned long val, char *buffer, int numOfDigitsToDisplay)
 {
-    char *p = s + 13;
+	const int bufferSize = 13; 
+    char *p = buffer + bufferSize;
     *p = '\0';
-    do {
-        if ((p - s) % 4 == 2)
-            *--p = ',';
+    do {				
+		printf("%u", p);
+		printf("|");
+		printf("%u", buffer);
+		printf("|");
+		printf("%u", (p - buffer) % 4);
+		
+        if ((p - buffer) % 4 == 2)
+		{
+            *--p = '.';
+		}
         *--p = '0' + val % 10;
         val /= 10;
-    } while (val);
+
+		printf("|");
+		printf("%c", *p);
+		printf("|");
+		printf("%u", val);
+		printf("\n");
+		--numOfDigitsToDisplay;
+
+    } while (numOfDigitsToDisplay);
     return p;
 }
 
+void testUlToChar(void)
+{
+	char buffer[15 + 1];
+	memset(buffer, 0, sizeof(buffer));
+
+	char response[15 + 1];
+	memset(response, 0, sizeof(response));
+
+	char *pRespone;
+
+	pRespone = ulToChar(1000000, buffer, 10);
+	printf("\n");
+	printf(pRespone);
+	
+	printf("\n");
+
+	memset(buffer, 0, sizeof(buffer));
+	memset(response, 0, sizeof(response));	
+	pRespone = ulToChar(1000000, buffer, 9);
+	printf("\n");
+	printf(pRespone);
+
+	printf("\n");
+
+	memset(buffer, 0, sizeof(buffer));
+	memset(response, 0, sizeof(response));	
+	pRespone = ulToChar(1234567890, buffer, 10);
+	printf("\n");
+	printf(pRespone);
+
+}
 
 /*
  ** valToStr
@@ -204,8 +255,10 @@ void serialNumber(uint32_t frequency)
 	printFrequency(frequency);
 }
  
+
+
 int main() {
-	char buffer[15 + 1];
+	char buffer[14 + 1];
 	memset(buffer, 0, sizeof(buffer));
 
 	char bufferToDisplay[15 + 2];
@@ -238,6 +291,7 @@ int main() {
 	//serialString(valToStr(frequency, buffer, 16, '.'));
 	//serialString(bufferToDisplay);
 
+/*
 	memset(buffer, 0, sizeof(buffer));
     memset(bufferToDisplay, 0, sizeof(bufferToDisplay));
 	pointerBufferToDisplay = valToStrPaddingZero(frequency, buffer, 14, '.');
@@ -299,6 +353,10 @@ int main() {
 	pointerBufferToDisplay = valToStrPaddingZero(frequency, buffer, 15, '.');
 	serialString(pointerBufferToDisplay);    
     printf("\n");
+
+*/
+
+	testUlToChar();
 
     return 0;
 }
