@@ -88,12 +88,12 @@ void serialSendThreeDigit(int val)
     }
 }
 
-void buildFrequency(uint32_t val, int numOfDigitsToDisplay) 
+void buildFrequency(uint32_t frequency, int numOfDigitsToDisplay) 
 {   
     memset(frequencyCharArray, 0, sizeof(frequencyCharArray));
 	char *pRespone;
 
-	pRespone = unsignedLongToChar(1000000, frequencyCharArray, numOfDigitsToDisplay);
+	pRespone = unsignedLongToChar(frequency, frequencyCharArray, numOfDigitsToDisplay);
 	
 	serialString(pRespone);  
 }
