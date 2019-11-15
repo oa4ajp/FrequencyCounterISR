@@ -3,6 +3,7 @@ This program interfacs an ATMega328p with an SN74LV8154N (32-bit counter).
 No interrupts are being used here. We expect the RCLK pin to handle the gating.
 Output is [count, difference] via serial protocol. 19200 baud, 8-bit, no parity.
 Connect the Atmega328 INT0 pin to the RCLK of the SN74LV8154
+Compile with WinAVR
 
 Map of Pins:
 ************
@@ -26,101 +27,12 @@ Y7					| PB1
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
-#include <avr/interrupt.h>
 #include <stdio.h>
 #include <string.h> /* memset */
-
-#define USART_BAUDRATE 9600
-#define UBRR_VALUE (((F_CPU/(USART_BAUDRATE*16UL)))-1)
+#include "Serial.h"
+#include "FrequencyManager.h"
 
 volatile char gateCycled = 0;
-
-#define MAXBUF 13
-
-char frequencyCharArray[MAXBUF + 1];
-
-//Method declarations
-char *unsignedLongToChar(unsigned long val, char *buffer, int numOfDigitsToDisplay);
-
-void serialInit(void)
-{
-	// initialize USART (must call this before using it)
-	UBRR0 = UBRR_VALUE; // set baud rate
-	UCSR0B |= (1 << TXEN0); //enable transmission only
-	UCSR0C |= (1 << UCSZ01) | (1 << UCSZ01); // no parity, 1 stop bit, 8-bit data
-}
-
-void serialSend(unsigned char data)
-{
-	// send a single character via USART
-	while(!(UCSR0A & (1 << UDRE0))){}; //wait while previous byte is completed
-	UDR0 = data; // Transmit data
-}
-
-void serialString(const char* s)
-{
-    while (*s)
-    {
-		serialSend(*s++);
-	}
-}
-
-void serialBreak(void)
-{
-	serialSend(10); // new line 
-	serialSend(13); // carriage return
-}
-
-void serialComma(void)
-{
-	serialSend(','); // comma
-	serialSend(' '); // space
-}
-
-void serialSendThreeDigit(int val)
-{
-    int divby = 100;
-    while (divby >= 1)
-    {
-        serialSend('0' + val / divby);
-        val -= (val / divby) * divby;
-        divby /= 10;
-    }
-}
-
-void buildFrequency(uint32_t frequency, int numOfDigitsToDisplay) 
-{   
-    memset(frequencyCharArray, 0, sizeof(frequencyCharArray));
-	char *pRespone;
-
-	pRespone = unsignedLongToChar(frequency, frequencyCharArray, numOfDigitsToDisplay);
-	
-	serialString(pRespone);  
-}
-
-/*
-	Length of parameter Buffer >= 14
-*/
-char *unsignedLongToChar(unsigned long val, char *buffer, int numOfDigitsToDisplay)
-{
-	const int bufferSize = 13; 
-    char *p = buffer + bufferSize;
-    *p = '\0';
-
-    do {						
-        if ((p - buffer) % 4 == 2)
-		{
-            *--p = '.';
-		}
-        *--p = '0' + val % 10;
-        val /= 10;
-
-		--numOfDigitsToDisplay;
-    } while (numOfDigitsToDisplay);
-    
-    return p;
-}
-
 
 void setRegister(char registerNumber)
 {    	
@@ -216,17 +128,6 @@ uint32_t readCount(void)
     value += readRegister(0);
 
     return value;
-}
-
-void serialTest(void)
-{
-	char i;
-	serialBreak();
-	for (i=65; i<(65+26); i++)
-    {
-		serialSend(i);
-	}
-	serialBreak();
 }
 
 void timerInitialize(void)
