@@ -100,11 +100,8 @@ char *ulToChar(unsigned long val, char *buffer, int numOfDigitsToDisplay)
 
 void testUlToChar(void)
 {
-	char buffer[15 + 1];
+	char buffer[13 + 1];
 	memset(buffer, 0, sizeof(buffer));
-
-	char response[15 + 1];
-	memset(response, 0, sizeof(response));
 
 	char *pRespone;
 
@@ -115,7 +112,6 @@ void testUlToChar(void)
 	printf("\n");
 
 	memset(buffer, 0, sizeof(buffer));
-	memset(response, 0, sizeof(response));	
 	pRespone = ulToChar(1000000, buffer, 9);
 	printf("\n");
 	printf(pRespone);
@@ -123,7 +119,6 @@ void testUlToChar(void)
 	printf("\n");
 
 	memset(buffer, 0, sizeof(buffer));
-	memset(response, 0, sizeof(response));	
 	pRespone = ulToChar(1234567890, buffer, 10);
 	printf("\n");
 	printf(pRespone);
